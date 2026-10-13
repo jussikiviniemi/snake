@@ -1,0 +1,42 @@
+# The name shown in the repo's "Actions" tab.
+name: Publish to GitHub Pages
+
+# Trigger: when should this run?
+on:
+  push:
+    branches: [main]   # every push to the main branch
+  workflow_dispatch:   # also adds a "Run workflow" button in the Actions tab
+
+# What the robot is allowed to do. It only gets what it needs.
+permissions:
+  contents: read   # read the files in the repo
+  pages: write     # publish to GitHub Pages
+  id-token: write  # prove to Pages that this run really comes from this repo
+
+# If you push twice quickly, finish one publish at a time instead of clashing.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # Run on a fresh Linux computer that GitHub provides.
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      # 1. Download a copy of the repo onto that computer.
+      - uses: actions/checkout@v5
+
+      # 2. Get the Pages settings ready.
+      - uses: actions/configure-pages@v5
+
+      # 3. Package the whole folder (".") as the website.
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: .
+
+      # 4. Publish the package to your Pages address.
+      - id: deployment
+        uses: actions/deploy-pages@v4
